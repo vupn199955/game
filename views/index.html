@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/mystyle.css" rel="stylesheet">
+    <script src="/javascripts/jquery-1.9.1.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <title>JS Bin</title>
+    <style>
+        .bar {
+            background-color: yellow;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container text-center">
+    </div>
+    <script>
+        var d1 = 52;
+        var d2 = 50;
+        var mySign;
+        var myTurn;
+        var n = 10;
+        var w = d3.range(n * n);
+        var mau = true;
+
+
+        var socket = io.connect('/');
+        socket.on("initialize", function (data) {
+            mySign = data.mySign;
+            myTurn = data.myTurn;
+        });
+        socket.on("serverPush", function (data) {
+            draw(data.i, data.j, data.sign);
+            myTurn = true;
+            if (data.sign == 'red')
+                mySign = 'blue';
+            else
+                mySign = 'red';
+            setTimeout(function () {
+                var rl = checkWin(data.j, data.i, data.sign);
+                if (rl == 5) {
+                    alert('mình thua rồi');
+                    location.reload();
+                }
+            }, 50);
+        });
+
+
+        var newgame = function () {
+            d3.select('div')
+                .append('svg').attr({ width: 600, height: 600 })
+                .selectAll('rect').data(w).enter().append('rect')
+                .attr({
+                    x: function (d) { return (d % 10) * d1 + 20 },
+                    y: function (d) { return Math.floor(d / 10) * d1 + 20 },
+                    width: d2,
+                    height: d2,
+                    id: function (i) { return i },
+
+
+                })
+                .on("click", function () {
+                    if (d3.select(this).attr("fill") == null && myTurn) {
+                        var i = d3.select(this).attr("x");
+                        var j = d3.select(this).attr("y");
+                        d3.select(this).attr({ fill: mySign });
+
+                        myTurn = false;
+                        socket.emit("clientPush", { i: (i - 20) / 52, j: (j - 20) / 52, sign: mySign });
+                        setTimeout(function () {
+                            var rl = checkWin((j - 20) / 52, (i - 20) / 52, mySign);
+                            if (rl == 5) {
+                                alert('mình thắng rồi');
+                                location.reload();
+                            }
+                        }, 50);
+                    }
+                });
+        };
+        
+        newgame();
+        var draw = function (x, y, val) {
+            var q = x * 52 + 20;
+            var p = y * 52 + 20;
+            $("rect[x='" + q + "'][y='" + p + "']").attr({ fill: val });
+
+        }
+
+
+        var matrix = function (x, y) {
+            var x_ = x * 52 + 20;
+            var y_ = y * 52 + 20;
+            var rl = $("rect[x='" + x_ + "'][y='" + y_ + "']").attr("fill");
+            return rl;
+        }
+
+        //check win
+        var checkWin = function (row, column, char) {
+            var count = 0;
+
+            // if (!this.isValidCell(row, column) || char === '')
+            //     return count;
+
+            //check for the HORIZONTAL line
+            for (var i = column; i >= 0; i--) {
+                var current = matrix(i, row);
+                if (current === char) {
+                    count++;
+                }
+            }
+
+            for (var i = column + 1; i < 10; i++) {
+                var current = matrix(i, row);
+                if (current === char) {
+                    count++;
+                }
+            }
+            if (count == 5) {
+                return count;
+            }
+
+            // check for the VERTICAL line
+            count = 0;
+            for (var i = row; i >= 0; i--) {
+                var current = matrix(column, i);
+                if (current === char) {
+                    count++;
+                }
+            }
+
+            for (var i = row + 1; i < 10; i++) {
+                var current = matrix(column, i);
+                if (current === char) {
+                    count++;
+                }
+            }
+            if (count == 5) {
+                return count;
+            }
+
+            // check for the DIAGONAL line
+            count = 0;
+            for (var i = row, j = column; i >= 0 && j >= 0; i-- , j--) {
+                var current = matrix(j, i);
+                if (current === char) {
+                    count++;
+                }
+            }
+            for (var i = row + 1, j = column + 1; i < 10 && j < 10; i++ , j++) {
+                var current = matrix(j, i);
+                if (current === char) {
+                    count++;
+                }
+            }
+            if (count == 5) {
+                return count;
+            }
+
+            // check for the back DIAGONAL line
+            count = 0;
+            for (var i = row, j = column; i >= 0 && j < 10; i-- , j++) {
+                var current = matrix(j, i);
+                if (current === char) {
+                    count++;
+                }
+            }
+            for (var i = row + 1, j = column - 1; i < 10 && j >= 0; i++ , j--) {
+                var current = matrix(j, i);
+                if (current === char) {
+                    count++;
+                }
+            }
+            if (count == 5) {
+                return count;
+            }
+
+            return 'tiep de';
+        };
+    </script>
+</body>
+
+</html>
