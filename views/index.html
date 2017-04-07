@@ -10,16 +10,22 @@
     <script src="/js/d3.v3.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <title>JS Bin</title>
-    <style>
-        .bar {
-            background-color: yellow;
-        }
-    </style>
 </head>
 
 <body>
+	<div class="container">
+		<div class="col-md-12">
+			<div class="col-md-12 title">
+				<h1>Cờ CaRo</h1>
+			</div>
+			<div class=" col-md-6 blue">Nước đi Blue:<span id="nuocdi_blue">0</span></div>
+			<div class="col-md-6 red">Nước đi Red:<span id="nuocdi_red">0</span></div>
+		</div>
+	</div>
+	
     <div class="container text-center">
-    </div>
+		<div class="col-md-12" id="banco"></div>
+	</div>
     <script>
         var d1 = 52;
         var d2 = 50;
@@ -28,20 +34,35 @@
         var n = 10;
         var w = d3.range(n * n);
         var mau = true;
+		var nuocdi_blue = 0;
+		var nuocdi_red = 0;
+		
+		var second = 0;
+		var minute = 0;
+		var thoigian;
 
-
+		
+		
         var socket = io.connect('/');
+		
         socket.on("initialize", function (data) {
             mySign = data.mySign;
             myTurn = data.myTurn;
+			thoigian = data.thoigian;
         });
+		
         socket.on("serverPush", function (data) {
             draw(data.i, data.j, data.sign);
             myTurn = true;
             if (data.sign == 'red')
+			{
                 mySign = 'blue';
+			}	
             else
-                mySign = 'red';
+            {
+				mySign = 'red';
+			}	
+			
             setTimeout(function () {
                 var rl = checkWin(data.j, data.i, data.sign);
                 if (rl == 5) {
@@ -49,12 +70,28 @@
                     location.reload();
                 }
             }, 50);
+			
+			
+			// dem so nuoc di tu server
+			if(mySign != 'blue')
+			{
+				nuocdi_blue++;
+				$('#nuocdi_blue').text(nuocdi_blue);
+			}
+			else // red
+			{
+				nuocdi_red++;
+				$('#nuocdi_red').text(nuocdi_red);
+			}
+			
         });
 
 
         var newgame = function () {
-            d3.select('div')
-                .append('svg').attr({ width: 600, height: 600 })
+			
+		
+            d3.select('#banco')
+                .append('svg').attr({ width: 560, height: 560 })
                 .selectAll('rect').data(w).enter().append('rect')
                 .attr({
                     x: function (d) { return (d % 10) * d1 + 20 },
@@ -62,11 +99,25 @@
                     width: d2,
                     height: d2,
                     id: function (i) { return i },
-
-
                 })
                 .on("click", function () {
+				
+					
+					
                     if (d3.select(this).attr("fill") == null && myTurn) {
+						
+						// dem so nuoc di tu client
+						if(mySign == 'blue')
+						{
+							nuocdi_blue++;
+							$('#nuocdi_blue').text(nuocdi_blue);
+						}
+						else // red
+						{
+							nuocdi_red++;
+							$('#nuocdi_red').text(nuocdi_red);
+						}
+					
                         var i = d3.select(this).attr("x");
                         var j = d3.select(this).attr("y");
                         d3.select(this).attr({ fill: mySign });
@@ -103,9 +154,6 @@
         //check win
         var checkWin = function (row, column, char) {
             var count = 0;
-
-            // if (!this.isValidCell(row, column) || char === '')
-            //     return count;
 
             //check for the HORIZONTAL line
             for (var i = column; i >= 0; i--) {
@@ -182,6 +230,7 @@
 
             return 'tiep de';
         };
+		
     </script>
 </body>
 

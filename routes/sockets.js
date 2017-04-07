@@ -2,14 +2,17 @@ var io = require('socket.io');
 var sockets = [];
 var count = 0;
 
+
 exports.initialize = function (server) {
 	io = io.listen(server);
 	io.sockets.on("connection", function (socket) {
+		
 		if (count < 2) {
 			sockets[count] = socket;
 			var data = {};
 			data.mySign = (count == 1) ? 'blue' : 'red';
 			data.myTurn = (count == 1) ? true : false;
+			
 			socket.emit("initialize", data);
 			count++;
 		}

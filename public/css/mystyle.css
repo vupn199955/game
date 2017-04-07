@@ -1,0 +1,15 @@
+body{
+	background:#eee;
+}
+.bar {
+	background-color: yellow;
+}
+.blue{color:blue; text-align:center; padding:5px;}
+.red{color:red; text-align:center; padding:5px;}
+svg{
+	background:#fff;
+}
+h1{text-align:center;}
+.title{
+	padding:5px;
+}
